@@ -6,10 +6,12 @@ import {
 
 describe("COACH_SYSTEM_PROMPT_TEMPLATE", () => {
   it("包含睡眠教练角色与硬性边界", () => {
-    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("你是“睡眠教练”，不是医生");
-    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("你不能修改 sleep plan");
-    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("药物剂量");
-    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("高风险安全要求");
+    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("你是“睡眠教练”");
+    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("修改 sleep plan");
+    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("给药物建议");
+    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("长度约束");
+    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("120-220 字");
+    expect(COACH_SYSTEM_PROMPT_TEMPLATE).toContain("不要机械重复“不能修改”");
   });
 });
 

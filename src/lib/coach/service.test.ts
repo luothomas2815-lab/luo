@@ -135,6 +135,53 @@ describe("startCoachChat", () => {
     );
   });
 
+  it("普通流式中出现 <think> 标签时，前端与落库文本都会被过滤", async () => {
+    const deps = makeDeps();
+    vi.mocked(deps.streamChatResponse).mockResolvedValue({
+      async *[Symbol.asyncIterator]() {
+        yield "<think>内部推理";
+        yield "继续推理</think>";
+        yield "可见回答";
+      },
+    });
+
+    const result = await startCoachChat(
+      {
+        userId: "u1",
+        conversationId: "c1",
+        message: "为什么不建议补觉？",
+        logId: "log-think-filter",
+      },
+      deps,
+    );
+
+    expect(result.kind).toBe("stream");
+    if (result.kind !== "stream") {
+      throw new Error("expected stream");
+    }
+
+    const reader = result.stream.getReader();
+    const decoder = new TextDecoder();
+    let output = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      output += decoder.decode(value);
+    }
+
+    expect(output).toBe("可见回答");
+    expect(output).not.toContain("<think>");
+    expect(output).not.toContain("</think>");
+
+    expect(deps.appendAssistantMessage).toHaveBeenCalledWith(
+      "c1",
+      "u1",
+      "可见回答",
+      false,
+      { source: "coach_provider" },
+    );
+  });
+
   it("安全优先拦截：保存 user + safety assistant，并记录 event", async () => {
     const deps = makeDeps();
     vi.mocked(deps.classifySafety).mockReturnValue({

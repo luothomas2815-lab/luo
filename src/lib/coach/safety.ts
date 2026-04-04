@@ -174,28 +174,28 @@ export function buildSafetyResponse(
         blocked: true,
         shouldRecordEvent: true,
         message:
-          "我现在不能继续普通睡眠教练对话。你提到的内容提示当前可能存在较高风险，请尽快联系当地紧急服务，或立即联系家人、朋友、医生、心理危机干预热线，确保你现在不是一个人独自承受这些风险。如果你此刻已经处在危险中，请优先寻求线下紧急帮助。",
+          "我现在不能继续普通睡眠教练对话。你提到的内容显示当前可能有较高风险，请先把安全放在第一位：尽快联系当地紧急服务，或立即联系家人、朋友、医生、心理危机干预热线，尽量不要一个人独自承受。如果你此刻已经处在危险中，请立刻寻求线下紧急帮助。",
       };
     case "medication":
       return {
         blocked: true,
         shouldRecordEvent: false,
         message:
-          "我不能提供药物剂量、换药、停药或处方调整建议。这类问题需要由医生或其他合格医疗专业人员根据你的具体情况判断。若你担心当前用药或症状，请尽快咨询医生。",
+          "我不能提供药物剂量、换药、停药或处方调整建议。这部分需要由医生或其他合格医疗专业人员结合你的具体情况判断。若你对当前用药或症状有担心，建议尽快咨询医生。",
       };
     case "diagnosis":
       return {
         blocked: true,
         shouldRecordEvent: false,
         message:
-          "我不能替代医生做诊断，也不能判断你是否属于抑郁、焦虑、睡眠呼吸暂停或重度失眠。如果这些问题正在明显影响你的安全、功能或白天状态，建议尽快寻求专业评估。",
+          "我不能替代医生做诊断，也不能判断你是否属于抑郁、焦虑、睡眠呼吸暂停或重度失眠。如果这些困扰已经明显影响到你的安全、日常功能或白天状态，建议尽快做专业评估。",
       };
     case "plan_override":
       return {
         blocked: true,
         shouldRecordEvent: false,
         message:
-          "我不能直接修改今天的 sleep plan。计划是系统根据你的睡眠日记和规则引擎生成的，我只能帮助你理解这些安排的原因，不能替你改 fixedWakeTime、earliestBedtime、allowNap 或 napLimitMinutes。",
+          "我不能直接修改今天的 sleep plan。这个计划是系统根据你的睡眠日记和规则引擎生成的；我可以帮你解释为什么这样安排，并给出执行上的小建议，但不能替你改 fixedWakeTime、earliestBedtime、allowNap 或 napLimitMinutes。",
       };
     case "safe":
     default:

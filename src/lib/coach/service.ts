@@ -83,6 +83,85 @@ async function resolveConversationId(
 const UPSTREAM_USER_MESSAGE =
   "暂时无法完成对话处理，请稍后再试。若持续失败，可提供错误编号协助排查。";
 
+interface ThinkFilter {
+  push(chunk: string): string;
+  flush(): string;
+}
+
+function createThinkVisibilityFilter(): ThinkFilter {
+  const OPEN_RE = /<\s*think\b[^>]*>/i;
+  const CLOSE_RE = /<\s*\/\s*think\s*>/i;
+  const MAX_TAG_LEN = 64;
+
+  let buffer = "";
+  let inThink = false;
+
+  function consume(): string {
+    let output = "";
+
+    while (buffer.length > 0) {
+      if (!inThink) {
+        const open = OPEN_RE.exec(buffer);
+        if (!open || open.index < 0) {
+          const lastLt = buffer.lastIndexOf("<");
+          if (lastLt === -1) {
+            output += buffer;
+            buffer = "";
+            break;
+          }
+
+          output += buffer.slice(0, lastLt);
+          buffer = buffer.slice(lastLt);
+          if (buffer.length > MAX_TAG_LEN) {
+            output += buffer.slice(0, buffer.length - MAX_TAG_LEN);
+            buffer = buffer.slice(buffer.length - MAX_TAG_LEN);
+          }
+          break;
+        }
+
+        output += buffer.slice(0, open.index);
+        buffer = buffer.slice(open.index + open[0].length);
+        inThink = true;
+        continue;
+      }
+
+      const close = CLOSE_RE.exec(buffer);
+      if (!close || close.index < 0) {
+        const keepTail = Math.min(MAX_TAG_LEN, buffer.length);
+        if (buffer.length > keepTail) {
+          buffer = buffer.slice(buffer.length - keepTail);
+        }
+        break;
+      }
+
+      buffer = buffer.slice(close.index + close[0].length);
+      inThink = false;
+    }
+
+    return output;
+  }
+
+  return {
+    push(chunk: string): string {
+      if (!chunk) return "";
+      buffer += chunk;
+      return consume();
+    },
+    flush(): string {
+      if (inThink) {
+        buffer = "";
+        return "";
+      }
+
+      const out = buffer
+        .replace(/<\s*\/?\s*think\b[^>]*>/gi, "")
+        .replace(/<\s*\/\s*think\s*>/gi, "");
+      buffer = "";
+      return out;
+    },
+  };
+}
+
 export async function startCoachChat(
   input: CoachChatInput,
   deps: CoachServiceDependencies = defaultDependencies,
@@ -205,10 +284,21 @@ export async function startCoachChat(
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const thinkFilter = createThinkVisibilityFilter();
       try {
         for await (const chunk of providerStream) {
-          fullText += chunk;
-          controller.enqueue(encoder.encode(chunk));
+          const safeChunk = thinkFilter.push(chunk);
+          if (!safeChunk) {
+            continue;
+          }
+          fullText += safeChunk;
+          controller.enqueue(encoder.encode(safeChunk));
+        }
+
+        const tail = thinkFilter.flush();
+        if (tail) {
+          fullText += tail;
+          controller.enqueue(encoder.encode(tail));
         }
 
         if (fullText.trim()) {

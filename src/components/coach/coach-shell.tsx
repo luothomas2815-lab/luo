@@ -36,7 +36,7 @@ type InitialMessage = {
 
 type CoachShellProps = {
   initialConversationId: string | null;
-  initialMessages: InitialMessage[];
+  initialMessages?: InitialMessage[];
   initialTitle: string | null;
   initialConversationHistory?: CoachConversationSummary[];
   showPlanSummary?: CoachPlanSummary | null;
@@ -65,7 +65,7 @@ export function CoachShell({
     initialConversationId,
   );
   const [messages, setMessages] = useState<CoachUiMessage[]>(
-    toUiMessages(initialMessages),
+    toUiMessages(initialMessages ?? []),
   );
   const [draftMessage, setDraftMessage] = useState("");
   const [focusRequestKey, setFocusRequestKey] = useState(0);
@@ -78,7 +78,7 @@ export function CoachShell({
     useState<ConversationMessageCache>(() => {
       if (!initialConversationId) return {};
       return {
-        [initialConversationId]: toUiMessages(initialMessages),
+        [initialConversationId]: toUiMessages(initialMessages ?? []),
       };
     });
 
