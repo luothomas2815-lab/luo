@@ -71,7 +71,7 @@ export function LoginForm() {
 
   return (
     <form
-      action="/login"
+      action="/auth/login-password"
       method="post"
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm"
