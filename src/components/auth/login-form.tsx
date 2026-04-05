@@ -24,7 +24,10 @@ function safeInternalPath(next: string | null): string {
 
 export function LoginForm() {
   const searchParams = useSearchParams();
-  const [globalError, setGlobalError] = useState<string | null>(null);
+  const next = safeInternalPath(searchParams.get("next"));
+  const [globalError, setGlobalError] = useState<string | null>(
+    searchParams.get("error"),
+  );
   const [manualNext, setManualNext] = useState<string | null>(null);
   const {
     register,
@@ -55,7 +58,6 @@ export function LoginForm() {
       setGlobalError(err.message);
       return;
     }
-    const next = safeInternalPath(searchParams.get("next"));
     setManualNext(next);
     // Use hard navigation so server-side auth checks always read fresh cookies.
     window.location.replace(next);
@@ -69,9 +71,12 @@ export function LoginForm() {
 
   return (
     <form
+      action="/login"
+      method="post"
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm"
     >
+      <input type="hidden" name="next" value={next} />
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-zinc-700">邮箱</span>
         <input
