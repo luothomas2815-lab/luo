@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,6 @@ function safeInternalPath(next: string | null): string {
 }
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [globalError, setGlobalError] = useState<string | null>(null);
   const {
@@ -46,8 +45,8 @@ export function LoginForm() {
       return;
     }
     const next = safeInternalPath(searchParams.get("next"));
-    router.push(next);
-    router.refresh();
+    // Use hard navigation so server-side auth checks always read fresh cookies.
+    window.location.assign(next);
   }
 
   return (
