@@ -25,6 +25,7 @@ function safeInternalPath(next: string | null): string {
 export function LoginForm() {
   const searchParams = useSearchParams();
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [manualNext, setManualNext] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -35,18 +36,35 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFormData) {
     setGlobalError(null);
+    setManualNext(null);
     const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
+    let err: { message: string } | null = null;
+    try {
+      const result = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      err = result.error;
+    } catch (error) {
+      setGlobalError(
+        error instanceof Error ? error.message : "登录请求失败，请稍后再试。",
+      );
+      return;
+    }
     if (err) {
       setGlobalError(err.message);
       return;
     }
     const next = safeInternalPath(searchParams.get("next"));
+    setManualNext(next);
     // Use hard navigation so server-side auth checks always read fresh cookies.
-    window.location.assign(next);
+    window.location.replace(next);
+    // Browser compatibility fallback: if replace is ignored, force assign once.
+    window.setTimeout(() => {
+      if (window.location.pathname.startsWith("/login")) {
+        window.location.assign(next);
+      }
+    }, 600);
   }
 
   return (
@@ -90,6 +108,15 @@ export function LoginForm() {
       >
         {isSubmitting ? "登录中…" : "登录"}
       </button>
+      {manualNext ? (
+        <p className="text-center text-xs text-zinc-500">
+          若未自动跳转，{" "}
+          <Link href={manualNext} className="underline">
+            点此继续
+          </Link>
+          。
+        </p>
+      ) : null}
       <p className="text-center text-sm text-zinc-600">
         没有账号？{" "}
         <Link href="/register" className="underline">
